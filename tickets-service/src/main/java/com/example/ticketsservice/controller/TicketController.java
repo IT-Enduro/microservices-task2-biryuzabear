@@ -1,12 +1,14 @@
 package com.example.ticketsservice.controller;
 
 import com.example.ticketsservice.dto.MessageResponse;
-import com.example.ticketsservice.dto.TicketResponse;
 import com.example.ticketsservice.dto.TicketPurchaseRequest;
+import com.example.ticketsservice.dto.TicketResponse;
 import com.example.ticketsservice.service.TicketService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -23,7 +25,8 @@ public class TicketController {
     }
 
     @PostMapping("/tickets/cinema/{cinemaUid}/films/{filmUid}")
-    public ResponseEntity<Object> purchaseTicket(@PathVariable UUID cinemaUid, @PathVariable UUID filmUid, @RequestHeader("X-User-Name") String userName, @RequestBody TicketPurchaseRequest ticketPurchaseRequest) {
+    public ResponseEntity<Object> purchaseTicket(@PathVariable UUID cinemaUid, @PathVariable UUID filmUid, @RequestBody TicketPurchaseRequest ticketPurchaseRequest, Authentication authentication) {
+        String userName = (String) ((JwtAuthenticationToken) authentication).getTokenAttributes().get("name");
         UUID ticketUid = ticketService.purchaseTicket(cinemaUid, filmUid, userName, ticketPurchaseRequest);
         if (ticketUid == null) {
             return new ResponseEntity<>(new MessageResponse("Не удалось купить билет"), HttpStatus.NOT_FOUND);
@@ -35,7 +38,8 @@ public class TicketController {
     }
 
     @GetMapping("/tickets/{ticketUid}")
-    public ResponseEntity<Object> getTicketInformation(@PathVariable UUID ticketUid, @RequestHeader("X-User-Name") String userName) {
+    public ResponseEntity<Object> getTicketInformation(@PathVariable UUID ticketUid, Authentication authentication) {
+        String userName = (String) ((JwtAuthenticationToken) authentication).getTokenAttributes().get("name");
         TicketResponse ticketResponse = ticketService.getTicket(ticketUid, userName);
         if (ticketResponse == null) {
             return new ResponseEntity<>(new MessageResponse("Билет не найден"), HttpStatus.NOT_FOUND);
@@ -45,7 +49,8 @@ public class TicketController {
     }
 
     @DeleteMapping("/tickets/{ticketUid}")
-    public ResponseEntity<Object> returnTicket(@PathVariable UUID ticketUid, @RequestHeader("X-User-Name") String userName) {
+    public ResponseEntity<Object> returnTicket(@PathVariable UUID ticketUid, Authentication authentication) {
+        String userName = (String) ((JwtAuthenticationToken) authentication).getTokenAttributes().get("name");
         Boolean returned = ticketService.returnTicket(ticketUid, userName);
         if (returned == null) {
             return new ResponseEntity<>(new MessageResponse("Билет не найден"), HttpStatus.NOT_FOUND);
